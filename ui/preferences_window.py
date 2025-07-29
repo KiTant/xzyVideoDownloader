@@ -33,10 +33,10 @@ class PreferencesWindow(ctk.CTkToplevel):
         ctk.CTkRadioButton(self, text="Enabled", variable=self.auto_load, value="Enabled").place(relx=0.025, rely=0.4)
         ctk.CTkRadioButton(self, text="Disabled", variable=self.auto_load, value="Disabled").place(relx=0.025, rely=0.5)
 
-        ctk.CTkLabel(self, text="Auto Save (settings):").place(relx=0.15, rely=0.3)
+        ctk.CTkLabel(self, text="Auto Save (settings):").place(relx=0.17, rely=0.3)
         self.auto_save = ctk.StringVar(value=self.MainWindow.settings["auto_save"])
-        ctk.CTkRadioButton(self, text="Enabled", variable=self.auto_save, value="Enabled").place(relx=0.15, rely=0.4)
-        ctk.CTkRadioButton(self, text="Disabled", variable=self.auto_save, value="Disabled").place(relx=0.15, rely=0.5)
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.auto_save, value="Enabled").place(relx=0.17, rely=0.4)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.auto_save, value="Disabled").place(relx=0.17, rely=0.5)
 
         ctk.CTkLabel(self, text="Notifications:").place(relx=0.15, rely=0.01)
         self.notifications = ctk.StringVar(value=self.MainWindow.settings["notifications"])
@@ -46,6 +46,34 @@ class PreferencesWindow(ctk.CTkToplevel):
             relx=0.15, rely=0.2)
         ctk.CTkRadioButton(self, text="Text + Windows Notification", variable=self.notifications,
                            value="TextAndWindowsNotification").place(relx=0.25, rely=0.1)
+
+        ctk.CTkLabel(self, text="Auto Load (queue):").place(relx=0.025, rely=0.6)
+        self.queue_auto_load = ctk.StringVar(value=self.MainWindow.settings["queue_auto_load"])
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.queue_auto_load, value="Enabled").place(relx=0.025,
+                                                                                                       rely=0.7)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.queue_auto_load, value="Disabled").place(relx=0.025,
+                                                                                                         rely=0.8)
+
+        ctk.CTkLabel(self, text="Auto Save (queue):").place(relx=0.17, rely=0.6)
+        self.queue_auto_save = ctk.StringVar(value=self.MainWindow.settings["queue_auto_save"])
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.queue_auto_save, value="Enabled").place(relx=0.17,
+                                                                                                       rely=0.7)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.queue_auto_save, value="Disabled").place(relx=0.17,
+                                                                                                         rely=0.8)
+
+        ctk.CTkLabel(self, text="Discord RPC:").place(relx=0.3, rely=0.3)
+        self.discord_rpc = ctk.StringVar(value=self.MainWindow.settings["discord_rpc"])
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.discord_rpc, value="Enabled").place(relx=0.3,
+                                                                                                   rely=0.4)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.discord_rpc, value="Disabled").place(relx=0.3,
+                                                                                                     rely=0.5)
+
+        ctk.CTkLabel(self, text="Link auto remove\n(after adding to the queue):").place(relx=0.3, rely=0.59)
+        self.link_auto_remove = ctk.StringVar(value=self.MainWindow.settings["link_auto_remove"])
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.link_auto_remove, value="Enabled").place(relx=0.3,
+                                                                                                        rely=0.7)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.link_auto_remove, value="Disabled").place(relx=0.3,
+                                                                                                          rely=0.8)
 
         ctk.CTkLabel(self, text="Main Theme:").place(relx=0.5, rely=0.01)
         self.main_themes = CTkListbox(self, width=125, font=ctk.CTkFont(family="Arial", size=12),
@@ -67,7 +95,7 @@ class PreferencesWindow(ctk.CTkToplevel):
 
         self.protocol("WM_DELETE_WINDOW", lambda: close_window(self.MainWindow, self))
 
-        self.after(100, lambda: self.focus_set())
+        self.after(100, self.focus_set)
 
     def apply_preferences(self, default=False):
         save_settings(self.MainWindow, self.MainWindow.files.get("previous_settings_file"))
@@ -79,6 +107,14 @@ class PreferencesWindow(ctk.CTkToplevel):
                 self.MainWindow.settings["main_theme"] = self.main_themes.get()
             self.MainWindow.settings["auto_load"] = self.auto_load.get()
             self.MainWindow.settings["auto_save"] = self.auto_save.get()
+            self.MainWindow.settings["queue_auto_load"] = self.queue_auto_load.get()
+            self.MainWindow.settings["queue_auto_save"] = self.queue_auto_save.get()
+            self.MainWindow.settings["link_auto_remove"] = self.link_auto_remove.get()
+            self.MainWindow.settings["discord_rpc"] = self.discord_rpc.get()
+            if self.discord_rpc.get() == "Enabled":
+                self.MainWindow.rpc.rpc_connect()
+            else:
+                self.MainWindow.rpc.rpc_close()
             if self.MainWindow.settings["auto_save"] == "Enabled":
                 save_settings(self.MainWindow, self.MainWindow.files.get("settings_file"))
         else:
@@ -86,15 +122,22 @@ class PreferencesWindow(ctk.CTkToplevel):
             self.set_vars()
         ctk.set_appearance_mode(self.theme_var.get())
         ctk.set_default_color_theme(self.resource_path(f'assets/themes/{self.main_themes.get().lower()}.json'))
-        self.after(50, lambda: self.focus_set())
+        self.after(50, self.focus_set)
 
     def apply_previous_preferences(self):
         load_settings(self.MainWindow, self.MainWindow.files.get("previous_settings_file"), set_vars=True)
-        self.set_vars()
+        if self.MainWindow.settings["discord_rpc"] == "Enabled":
+            self.MainWindow.rpc.rpc_connect()
+        else:
+            self.MainWindow.rpc.rpc_close()
 
     def set_vars(self):
         self.auto_load.set(self.MainWindow.settings['auto_load'])
         self.auto_save.set(self.MainWindow.settings['auto_save'])
+        self.queue_auto_load.set(self.MainWindow.settings['queue_auto_load'])
+        self.queue_auto_save.set(self.MainWindow.settings['queue_auto_save'])
+        self.link_auto_remove.set(self.MainWindow.settings['link_auto_remove'])
+        self.discord_rpc.set(self.MainWindow.settings["discord_rpc"])
         self.notifications.set(self.MainWindow.settings['notifications'])
         self.theme_var.set(self.MainWindow.settings['theme'])
         self.main_themes.select(list(MAIN_THEMES.keys())[list(MAIN_THEMES.values()).index(self.MainWindow.settings["main_theme"].title())])

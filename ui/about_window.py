@@ -24,4 +24,4 @@ class AboutWindow(ctk.CTkToplevel):
         MainWindow.all_children.append(self)
         self.protocol("WM_DELETE_WINDOW", lambda: close_window(self.MainWindow, self))
 
-        self.after(100, lambda: self.focus_set())
+        self.after(100, self.focus_set)

@@ -1,3 +1,5 @@
+import os
+import queue
 from customtkinter import filedialog
 import customtkinter as ctk
 from utils.ui_manager import *
@@ -22,8 +24,14 @@ def progress_hook(MainWindow: "MainWindowClass", d):
 
 def select_folder(MainWindow: "MainWindowClass"):
     folder_path = filedialog.askdirectory()
-    if folder_path:
+    if folder_path and os.path.exists(folder_path):
         MainWindow.save_path_var.set(folder_path)
+
+
+def select_cookies_file(MainWindow: "MainWindowClass"):
+    file_path = filedialog.askopenfilename()
+    if file_path and os.path.exists(file_path):
+        MainWindow.cookies_file_path_var.set(file_path)
 
 
 def start_download_thread(MainWindow: "MainWindowClass"):
@@ -38,13 +46,13 @@ def stop_download(MainWindow: "MainWindowClass"):
     d_stop_download(MainWindow)
 
 
-def save_settings(MainWindow: "MainWindowClass", file, values: dict = None):
-    s_save(MainWindow, file, values)
+def save_settings(MainWindow: "MainWindowClass", file, values: dict = None, queue_obj: queue.Queue = None):
+    s_save(MainWindow, file, values, queue_obj)
 
 
 def load_settings(MainWindow: "MainWindowClass", file, auto_load: bool = False, set_vars: bool = False,
-                  default_values: dict = DEFAULT_SETTINGS, settings_name: str = "settings"):
-    s_load(MainWindow, file, auto_load, set_vars, default_values, settings_name)
+                  default_values: dict = DEFAULT_SETTINGS, attr_name: str = "settings"):
+    s_load(MainWindow, file, auto_load, set_vars, default_values, attr_name)
 
 
 def show_soon():
@@ -67,8 +75,8 @@ def check_updates(MainWindow: "MainWindowClass"):
     check_last_version(MainWindow)
 
 
-def add_to_queue(MainWindow: "MainWindowClass"):
-    q_add_to_queue(MainWindow)
+def add_to_queue(MainWindow: "MainWindowClass", url: str = None):
+    q_add_to_queue(MainWindow, url)
 
 
 def clear_queue(MainWindow: "MainWindowClass"):
@@ -79,5 +87,5 @@ def start_queue_processing(MainWindow: "MainWindowClass"):
     q_start_queue_processing(MainWindow)
 
 __all__ = ["make_notification", "progress_hook", "select_folder", "start_download_thread", "download_video",
-           "stop_download", "save_settings", "load_settings", "show_soon", "show_about",
+           "stop_download", "save_settings", "load_settings", "show_soon", "show_about", "select_cookies_file",
            "show_preferences", "check_updates", "close_window", "add_to_queue", "clear_queue", "start_queue_processing"]

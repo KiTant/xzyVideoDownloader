@@ -6,17 +6,23 @@ if TYPE_CHECKING:
     from ui.main_window import MainWindow as MainWindowClass
 
 
-def q_add_to_queue(MainWindow: "MainWindowClass"):
+def q_add_to_queue(MainWindow: "MainWindowClass", given_url: str):
     from utils.helpers import make_notification
 
-    url = MainWindow.url_var.get()
+    url = given_url if given_url else MainWindow.url_var.get()
     if url:
         MainWindow.download_queue.put(url)
         with MainWindow.display_lock:
             MainWindow.queue_for_display.append(url)
         q_update_queue_display(MainWindow)
-        make_notification(MainWindow, {"status": "BaseT", "text": "URL added to the queue",
-                                       "color": "green"})
+        if not given_url:
+            if MainWindow.settings["link_auto_remove"] == "Enabled":
+                MainWindow.url_var.set("")
+            make_notification(MainWindow, {"status": "BaseT", "text": "URL added to the queue",
+                                           "color": "green"})
+        else:
+            make_notification(MainWindow, {"status": "BaseT", "text": "Loaded queue from previous session",
+                                           "color": "green"})
     else:
         make_notification(MainWindow, {"status": "Base", "text": "Error: Please enter a video URL.",
                                        "color": "red", "icon": "cancel"})
@@ -61,6 +67,7 @@ def q_start_queue_processing(MainWindow: "MainWindowClass"):
     MainWindow.is_processing_queue = True
     MainWindow.download_thread = threading.Thread(target=lambda: q_process_queue(MainWindow), daemon=True)
     MainWindow.download_thread.start()
+    MainWindow.rpc.rpc_update(state=f"Downloading queue... ({len(MainWindow.download_queue.queue)} video(s))")
 
     MainWindow.download_button.configure(state="disabled")
     MainWindow.add_to_queue_button.configure(state="disabled")
@@ -127,10 +134,12 @@ def q_queue_finished(MainWindow: "MainWindowClass"):
         make_notification(MainWindow, {"status": "DownloadingUpdate",
                                        "text": "Download stopped (unavailable-fragments)",
                                        "color": "red"})
+        MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
     else:
         make_notification(MainWindow, {"status": "DownloadingUpdate",
                                        "text": "Queue download completed successfully!",
                                        "color": "green", "value": 100, "icon": "check"})
         MainWindow.progress_bar.set(0)
+        MainWindow.rpc.rpc_update(state=f"Just chillin (🟢)")
 
 __all__ = ["q_add_to_queue", "q_clear_queue", "q_start_queue_processing"]

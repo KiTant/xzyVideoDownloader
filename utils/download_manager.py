@@ -58,6 +58,11 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
     save_path = MainWindow.save_path_var.get()
     download_type = MainWindow.download_type_var.get()
     quality = MainWindow.quality_var.get()
+    use_cookies = MainWindow.use_cookies_var.get()
+    cookies_file_path = MainWindow.cookies_file_path_var.get()
+
+    if queue_enabled is False:
+        MainWindow.rpc.rpc_update(state=f"Downloading video...")
 
     MainWindow.after(0, lambda: MainWindow.download_button.configure(state="disabled"))
     MainWindow.after(0, lambda: MainWindow.stop_button.configure(state="normal"))
@@ -74,6 +79,8 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             'abort-on-unavailable-fragments': True,
             'skip_unavailable_fragments': False
         }
+        if use_cookies is True and os.path.exists(cookies_file_path):
+            ydl_opts['cookiefile'] = cookies_file_path
         if download_type == "Audio Only (MP3)":
             ydl_opts['format'] = 'bestaudio/best' if quality.startswith("Best") else 'worstaudio/worst'
             ydl_opts['postprocessors'] = [{
@@ -110,6 +117,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",
                                            "text": "Video download completed successfully!",
                                            "color": "green", "value": 100, "icon": "check"}))
+            MainWindow.rpc.rpc_update(state=f"Just chillin (🟢)")
 
     except yt_dlp.utils.DownloadError as e:
         if not MainWindow.stop_download_flag:
@@ -118,21 +126,31 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
                 MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",
                                                "text": "Download stopped (unavailable-fragments)", "color": "red"}))
             else:
+                if "invalid start byte" in error_message.lower():
+                    error_message = "Error when using a cookies file, \n" \
+                                    "please check that the file you are using contains cookies"
+                elif "search youtube" in error_message.lower():
+                    error_message = "It looks like you entered an incorrect link."
+                elif "private" in error_message.lower():
+                    error_message = "This video is private, maybe with using cookies it can be downloaded"
                 MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "Base",
-                                               "text": f"Error: {error_message.split(':')[-1].strip()}",
+                                               "text": f"Error: {error_message}",
                                                "color": "red", "icon": "cancel"}))
+            MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
 
     except Exception as err:
         if not MainWindow.stop_download_flag:
             MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "Base",
-                                           "text": f"An unexpected error occurred: {err}",
-                                           "color": "red", "icon": "cancel"}))
+                                                                       "text": f"An unexpected error occurred: {err}",
+                                                                       "color": "red", "icon": "cancel"}))
+            MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
 
     finally:
         if MainWindow.stop_download_flag:
-            MainWindow.after(0, make_notification(MainWindow, {"status": "DownloadingUpdate",
+            MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",
                                                                "text": "Download stopped (unavailable-fragments)",
                                                                "color": "red"}))
+            MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
         if queue_enabled is False:
             MainWindow.after(0, lambda: MainWindow.download_button.configure(state="normal"))
             MainWindow.after(0, lambda: MainWindow.stop_button.configure(state="disabled"))

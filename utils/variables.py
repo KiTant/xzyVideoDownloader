@@ -1,7 +1,8 @@
 APP_NAME = "xzyVideoDownloader"
 REPO_NAME = APP_NAME
 ICON_PATH = 'assets/xzy-video-downloader-icon.ico'
-VERSION = "1.0.0"
+VERSION = "1.2.0"
+RPC_ID = "1399413906010673282"
 
 MAIN_THEMES = {
     0: "Carrot",
@@ -24,7 +25,11 @@ DEFAULT_SETTINGS = {
     "main_theme": "Carrot",
     "notifications": "TextAndWindowsNotification",  # OnlyText; TextAndMessageBox; TextAndWindowsNotification
     "auto_load": "Enabled",
-    "auto_save": "Enabled"
+    "auto_save": "Enabled",
+    "queue_auto_load": "Enabled",
+    "queue_auto_save": "Enabled",
+    "link_auto_remove": "Enabled",
+    "discord_rpc": "Disabled",
 }
 
 DEFAULT_SPECIAL_SETTINGS = {  # Special settings will be saved anyway after any change(s) (and auto loaded always)
@@ -34,5 +39,5 @@ DEFAULT_SPECIAL_SETTINGS = {  # Special settings will be saved anyway after any 
     "quality": "",
     "use_queue": "",
     "use_cookies": "",
-    "cookies_browser": "",
+    "cookies_path": "",
 }

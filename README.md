@@ -14,6 +14,8 @@ Application that allows you to easily download videos from the internet. Simply 
 - requests
 - time
 - threading
+- pyperclip
+- pypresence
 
 ## Screenshot:
 ![Program screenshot](https://github.com/KiTant/xzyVideoDownloader/blob/master/ScreenshotOfProgram.jpg)

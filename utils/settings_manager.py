@@ -1,3 +1,4 @@
+import queue
 import customtkinter as ctk
 import os
 import json
@@ -22,20 +23,34 @@ def s_change_new_keys(settings, default_values: dict):
     return settings
 
 
-def s_save(MainWindow: "MainWindowClass", file, values: dict):
+def s_save(MainWindow: "MainWindowClass", file, values: dict, queue_obj: queue.Queue):
     os.makedirs(os.path.dirname(file), exist_ok=True)
-    with open(file, 'w') as f:
-        json.dump(values if values else MainWindow.settings, f, indent=4)
+    with open(file, 'w', encoding='utf-8') as f:
+        if queue_obj:
+            with queue_obj.mutex:
+                values = list(queue_obj.queue)
+        if (queue_obj and values) or not queue_obj:
+            json.dump(values if values else MainWindow.settings, f, indent=4, ensure_ascii=False)
         f.close()
 
 
 def s_load(MainWindow: "MainWindowClass", file, auto_load: bool, set_vars: bool,
-           default_values: dict, settings_name: str):
+           default_values: dict, attr_name: str):
     if os.path.exists(file):
-        with open(file, 'r') as f:
-            data = s_change_new_keys(json.load(f), default_values)
-            if (auto_load is True and data['auto_load'] == "Enabled") or (auto_load is False):
-                setattr(MainWindow, settings_name, data)
+        with open(file, 'r', encoding='utf-8') as f:
+            if default_values:
+                data = s_change_new_keys(json.load(f), default_values)
+            else:
+                try:
+                    from utils.helpers import add_to_queue
+                    data = json.load(f)
+                    for item in data:
+                        add_to_queue(MainWindow, item)
+                except json.JSONDecodeError:
+                    pass
+                data = None
+            if ((auto_load is True and data['auto_load'] == "Enabled") or (auto_load is False)) and data:
+                setattr(MainWindow, attr_name, data)
                 if set_vars is True:
                     for window in MainWindow.all_children:
                         if window.title() in ["Preferences"]:

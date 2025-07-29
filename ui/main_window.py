@@ -5,7 +5,9 @@ from utils.helpers import *
 from utils.variables import DEFAULT_SETTINGS, DEFAULT_SPECIAL_SETTINGS, ICON_PATH, APP_NAME
 from ui.title_menu import TitleMenu
 from ui.queue_window import QueueWindow
+from utils.rpc_manager import RPCManager
 import queue
+import pyperclip
 
 
 class MainWindow(ctk.CTk):
@@ -13,7 +15,7 @@ class MainWindow(ctk.CTk):
         super().__init__()
 
         self.title(APP_NAME)
-        self.geometry("720x620")
+        self.geometry("720x640")
         self.grid_columnconfigure(0, weight=1)
         self.resizable(False, False)
         self.after(300, lambda: self.iconbitmap(self.resource_path(ICON_PATH)))
@@ -24,18 +26,20 @@ class MainWindow(ctk.CTk):
         self.files = files
         self.settings = DEFAULT_SETTINGS.copy()
         self.special_settings = DEFAULT_SPECIAL_SETTINGS.copy()
-        self.supported_browsers = ["brave", "chrome", "chromium", "edge", "firefox", "opera", "safari",
-                                   "vivaldi"]
+
         self.download_queue = queue.Queue()
         self.queue_for_display = []
         self.display_lock = threading.Lock()
+
         self.use_cookies_var = ctk.BooleanVar(value=False)
         self.use_queue_var = ctk.BooleanVar(value=False)
-        self.browser_var = ctk.StringVar(value="edge")
         self.url_var = ctk.StringVar()
         self.download_type_var = ctk.StringVar(value="Video and Audio")
         self.quality_var = ctk.StringVar(value="Best (both)")
         self.save_path_var = ctk.StringVar(value=os.path.join(os.path.expanduser('~'), 'Downloads'))
+        self.cookies_file_path_var = ctk.StringVar(value="None")
+
+        self.rpc = RPCManager()
 
         self.download_thread = None
         self.stop_download_flag = False
@@ -43,7 +47,7 @@ class MainWindow(ctk.CTk):
 
         load_settings(self, self.files.get("settings_file"), auto_load=True, set_vars=True)
         load_settings(self, self.files.get("special_settings_file"),
-                      default_values=DEFAULT_SPECIAL_SETTINGS, settings_name="special_settings")
+                      default_values=DEFAULT_SPECIAL_SETTINGS, attr_name="special_settings")
 
         self._initialize_components()
 
@@ -52,6 +56,10 @@ class MainWindow(ctk.CTk):
         self.url_label.grid(row=0, column=0, padx=20, pady=(20, 5), sticky="w")
         self.url_entry = ctk.CTkEntry(self, textvariable=self.url_var, width=400)
         self.url_entry.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
+
+        for method in ["<<Paste>>", "<<Copy>>"]:
+            self.url_entry.unbind_class("Text", method)
+        self.url_entry.bind("<Key>", lambda event: self.on_key_press(event))
 
         if self.special_settings["saved_link_input"]:
             self.url_var.set(self.special_settings["saved_link_input"])
@@ -98,69 +106,87 @@ class MainWindow(ctk.CTk):
         if self.special_settings["use_queue"]:
             self.use_queue_var.set(self.special_settings["use_queue"])
 
-        self.cookies_checkbox = ctk.CTkCheckBox(self, text="Use cookies (from choosed browser)",
+        self.queue_window = QueueWindow(self.resource_path)
+        self.queue_window.withdraw()
+
+        self.cookies_file_label = ctk.CTkLabel(self, text="Cookies file:")
+        self.cookies_file_label.grid(row=6, column=0, padx=20, pady=(10, 5), sticky="w")
+        self.cookies_file_entry = ctk.CTkEntry(self, textvariable=self.cookies_file_path_var, state="readonly")
+        self.cookies_file_entry.grid(row=7, column=0, padx=20, pady=5, sticky="ew")
+        self.select_cookies_file_button = ctk.CTkButton(self, text="Select cookies file",
+                                                        command=lambda: select_cookies_file(self))
+        self.select_cookies_file_button.grid(row=8, column=0, padx=20, pady=5, sticky="w")
+
+        if self.special_settings["cookies_path"]:
+            self.cookies_file_path_var.set(self.special_settings["cookies_path"])
+
+        self.cookies_checkbox = ctk.CTkCheckBox(self, text="Use cookies (from choosed file)",
                                                 variable=self.use_cookies_var)
-        self.cookies_checkbox.grid(row=7, column=0, padx=20, sticky="w")
+        self.cookies_checkbox.grid(row=8, column=0, padx=20, sticky="s")
 
         if self.special_settings["use_cookies"]:
             self.use_cookies_var.set(self.special_settings["use_cookies"])
 
-        self.cookie_browser_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.cookie_browser_frame.grid(row=6, column=0, columnspan=2, padx=20, pady=(20, 10), sticky="ew")
-        self.cookie_browser_label = ctk.CTkLabel(self.cookie_browser_frame, text="Browser (for cookies):")
-        self.cookie_browser_label.pack(side="left", padx=(0, 10))
-        self.cookie_browser_menu = ctk.CTkOptionMenu(self.cookie_browser_frame, variable=self.browser_var,
-                                                     values=self.supported_browsers)
-        self.cookie_browser_menu.pack(side="left", fill="x", expand=True)
-
-        if self.special_settings["cookies_browser"] and self.special_settings["cookies_browser"] in self.supported_browsers:
-            self.browser_var.set(self.special_settings["cookies_browser"])
-
         self.save_folder_label = ctk.CTkLabel(self, text="Save Folder:")
-        self.save_folder_label.grid(row=8, column=0, padx=20, pady=(20, 5), sticky="w")
+        self.save_folder_label.grid(row=9, column=0, padx=20, pady=(10, 5), sticky="w")
         self.save_folder_entry = ctk.CTkEntry(self, textvariable=self.save_path_var, state="readonly")
-        self.save_folder_entry.grid(row=9, column=0, padx=20, pady=5, sticky="ew")
+        self.save_folder_entry.grid(row=10, column=0, padx=20, pady=5, sticky="ew")
         self.select_folder_button = ctk.CTkButton(self, text="Select Folder", command=lambda: select_folder(self))
-        self.select_folder_button.grid(row=10, column=0, padx=20, pady=5, sticky="w")
+        self.select_folder_button.grid(row=11, column=0, padx=20, pady=5, sticky="w")
 
         if self.special_settings["default_path"]:
             self.save_path_var.set(self.special_settings["default_path"])
 
         self.download_button = ctk.CTkButton(self, text="Download", command=self.start_download)
-        self.download_button.grid(row=11, column=0, padx=20, pady=(20, 5), sticky="ew")
+        self.download_button.grid(row=12, column=0, padx=20, pady=(10, 5), sticky="ew")
         self.stop_button = ctk.CTkButton(self, text="Stop Download", command=lambda: stop_download(self),
                                          state="disabled")
-        self.stop_button.grid(row=12, column=0, padx=20, pady=5, sticky="ew")
+        self.stop_button.grid(row=13, column=0, padx=20, pady=5, sticky="ew")
 
         self.status_label = ctk.CTkLabel(self, text="",
                                          font=ctk.CTkFont(family="Arial", size=16))
-        self.status_label.grid(row=13, column=0, padx=20, pady=5, sticky="w")
+        self.status_label.grid(row=14, column=0, padx=20, pady=5, sticky="w")
         self.progress_bar = ctk.CTkProgressBar(self)
         self.progress_bar.set(0)
-        self.progress_bar.grid(row=14, column=0, padx=20, pady=(5, 20), sticky="ew")
+        self.progress_bar.grid(row=16, column=0, padx=20, pady=(5, 20), sticky="ew")
 
         self.menu = TitleMenu(MainWindow=self)
-        self.queue_window = QueueWindow(self.resource_path)
-        self.queue_window.withdraw()
+
+        if self.settings["discord_rpc"] == "Enabled":
+            self.rpc.rpc_connect()
 
         self.protocol("WM_DELETE_WINDOW", self.window_close)
+
+        if self.settings["queue_auto_load"] == "Enabled":
+            load_settings(self, self.files.get("queue_file"), default_values={}, attr_name="download_queue")
 
     def update_status(self, message, **kwargs):
         self.status_label.configure(text=message, **kwargs)
 
     def window_close(self):
+        self.rpc.rpc_close()
+        self.save_spec_attrs()
+        self.destroy()
+
+    def save_spec_attrs(self):
         self.special_settings["saved_link_input"] = self.url_entry.get()
         self.special_settings["default_path"] = self.save_path_var.get()
         self.special_settings["download_type"] = self.download_type_var.get()
         self.special_settings["quality"] = self.quality_var.get()
         self.special_settings["use_queue"] = self.use_queue_var.get()
         self.special_settings["use_cookies"] = self.use_cookies_var.get()
-        self.special_settings["cookies_browser"] = self.browser_var.get()
+        self.special_settings["cookies_path"] = self.cookies_file_path_var.get()
         save_settings(self, self.files.get("special_settings_file"), self.special_settings)
-        self.destroy()
+        if self.settings["queue_auto_save"] == "Enabled":
+            save_settings(self, self.files.get("queue_file"), queue_obj=self.download_queue)
 
     def start_download(self):
+        self.save_spec_attrs()
         if self.use_queue_var.get() is True:
             start_queue_processing(self)
         else:
             start_download_thread(self)
+
+    def on_key_press(self, event):
+        if event.char == '\x03': pyperclip.copy(self.url_var.get())  # Ctrl + C
+        elif event.char == '\x16': pyperclip.paste()  # Ctrl + V

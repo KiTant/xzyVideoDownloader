@@ -11,7 +11,8 @@ def resource_path(file):
 appdata_dir = os.getenv('APPDATA')
 files = {"settings_file": os.path.join(appdata_dir, APP_NAME, 'settings.json'),
          "previous_settings_file": os.path.join(appdata_dir, APP_NAME, 'previous_settings.json'),
-         "special_settings_file": os.path.join(appdata_dir, APP_NAME, 'special_settings.json')}
+         "special_settings_file": os.path.join(appdata_dir, APP_NAME, 'special_settings.json'),
+         "queue_file": os.path.join(appdata_dir, APP_NAME, 'saved_queue.json')}
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme(resource_path('assets/themes/carrot.json'))

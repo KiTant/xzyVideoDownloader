@@ -19,6 +19,7 @@ def w_show_preferences(MainWindow: "MainWindowClass"):
     from ui.preferences_window import PreferencesWindow
     for window in MainWindow.all_children:
         if window.title() in ["Preferences"]:
+            window.focus_set()
             return
     PreferencesWindow(MainWindow, MainWindow.resource_path)
 
@@ -27,6 +28,7 @@ def w_show_about(MainWindow: "MainWindowClass"):
     from ui.about_window import AboutWindow
     for window in MainWindow.all_children:
         if window.title() in ["About"]:
+            window.focus_set()
             return
     AboutWindow(MainWindow, MainWindow.resource_path)
 
