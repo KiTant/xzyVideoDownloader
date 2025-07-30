@@ -35,7 +35,7 @@ def download_last_release(MainWindow: "MainWindowClass", version: str, asset_nam
 
 def check_last_version(MainWindow: "MainWindowClass"):
     for window in MainWindow.all_children:
-        if window.title() == f"{APP_NAME} (checking updates)" or MainWindow.updating is True:
+        if window.title() == f"{APP_NAME} (checking updates)" or MainWindow.updating:
             return
     MainWindow.updating = True
     msg = CTkMessagebox(title=f"{APP_NAME} (checking updates)",
@@ -51,14 +51,14 @@ def check_last_version(MainWindow: "MainWindowClass"):
                                 icon="info", options=["Yes", "No"], topmost=False)
             if msg.get() in ["Yes"]:
                 found_file = False
-                if latest_release['assets'] is None:
+                if not latest_release['assets']:
                     MainWindow.updating = False
                     return
                 for asset in latest_release['assets']:
                     if asset['name'].strip().startswith(f"{APP_NAME}") and asset['name'].strip().endswith(".exe"):
                         found_file = True
                         download_last_release(MainWindow, latest_release['tag_name'], asset['name'])
-                if found_file is False:
+                if not found_file:
                     stop_update(MainWindow, title=f"{APP_NAME} (updating)", icon="info",
                                 message=f"Not found main file of {APP_NAME}, update stopped.")
         else:

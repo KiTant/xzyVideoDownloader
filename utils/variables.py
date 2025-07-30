@@ -1,8 +1,16 @@
+import os
+
 APP_NAME = "xzyVideoDownloader"
 REPO_NAME = APP_NAME
 ICON_PATH = 'assets/xzy-video-downloader-icon.ico'
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 RPC_ID = "1399413906010673282"
+
+APPDATA = os.getenv('APPDATA')
+FILES = {"settings_file": os.path.join(APPDATA, APP_NAME, 'settings.json'),
+         "previous_settings_file": os.path.join(APPDATA, APP_NAME, 'previous_settings.json'),
+         "special_settings_file": os.path.join(APPDATA, APP_NAME, 'special_settings.json'),
+         "queue_file": os.path.join(APPDATA, APP_NAME, 'saved_queue.json')}
 
 MAIN_THEMES = {
     0: "Carrot",

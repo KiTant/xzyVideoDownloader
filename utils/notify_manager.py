@@ -14,14 +14,16 @@ def notification(MainWindow: "MainWindowClass", notifyParams: dict):
                       topmost=False)
 
     elif MainWindow.settings["notifications"].endswith("WindowsNotification"):
+        from utils.helpers import resource_path
+
         if notifyParams["status"] == "Base":
             notify(title=f"{APP_NAME} notification", body=notifyParams["text"],
-                   icon={'src': MainWindow.resource_path(ICON_PATH),
+                   icon={'src': resource_path(ICON_PATH),
                          'placement': 'appLogoOverride'})
 
         elif notifyParams["status"] == "Downloading":
             notify(title=f"{APP_NAME} notification",
-                   icon={'src': MainWindow.resource_path(ICON_PATH),
+                   icon={'src': resource_path(ICON_PATH),
                          'placement': 'appLogoOverride'},
                    progress={
                        'title': notifyParams["link"],

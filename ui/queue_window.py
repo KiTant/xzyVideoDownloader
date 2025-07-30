@@ -1,9 +1,10 @@
 import customtkinter as ctk
 from utils.variables import ICON_PATH
+from utils.helpers import resource_path
 
 
 class QueueWindow(ctk.CTkToplevel):
-    def __init__(self, resource_path):
+    def __init__(self):
         super().__init__()
         self.geometry("800x500")
         self.title("Queue")

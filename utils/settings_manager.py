@@ -8,9 +8,9 @@ if TYPE_CHECKING:
 
 
 def s_apply(MainWindow: "MainWindowClass"):
+    from utils.helpers import resource_path
     ctk.set_appearance_mode(MainWindow.settings['theme'])
-    ctk.set_default_color_theme(MainWindow.resource_path(f'assets/themes/'
-                                                         f'{MainWindow.settings["main_theme"].lower()}.json'))
+    ctk.set_default_color_theme(resource_path(f'assets/themes/{MainWindow.settings["main_theme"].lower()}.json'))
 
 
 def s_change_new_keys(settings, default_values: dict):
@@ -49,9 +49,9 @@ def s_load(MainWindow: "MainWindowClass", file, auto_load: bool, set_vars: bool,
                 except json.JSONDecodeError:
                     pass
                 data = None
-            if ((auto_load is True and data['auto_load'] == "Enabled") or (auto_load is False)) and data:
+            if ((auto_load and data['auto_load'] == "Enabled") or (not auto_load)) and data:
                 setattr(MainWindow, attr_name, data)
-                if set_vars is True:
+                if set_vars:
                     for window in MainWindow.all_children:
                         if window.title() in ["Preferences"]:
                             window.set_vars()

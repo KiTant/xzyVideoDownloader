@@ -61,7 +61,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
     use_cookies = MainWindow.use_cookies_var.get()
     cookies_file_path = MainWindow.cookies_file_path_var.get()
 
-    if queue_enabled is False:
+    if not queue_enabled:
         MainWindow.rpc.rpc_update(state=f"Downloading video...")
 
     MainWindow.after(0, lambda: MainWindow.download_button.configure(state="disabled"))
@@ -79,7 +79,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             'abort-on-unavailable-fragments': True,
             'skip_unavailable_fragments': False
         }
-        if use_cookies is True and os.path.exists(cookies_file_path):
+        if use_cookies and os.path.exists(cookies_file_path):
             ydl_opts['cookiefile'] = cookies_file_path
         if download_type == "Audio Only (MP3)":
             ydl_opts['format'] = 'bestaudio/best' if quality.startswith("Best") else 'worstaudio/worst'
@@ -151,7 +151,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
                                                                "text": "Download stopped (unavailable-fragments)",
                                                                "color": "red"}))
             MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
-        if queue_enabled is False:
+        if not queue_enabled:
             MainWindow.after(0, lambda: MainWindow.download_button.configure(state="normal"))
             MainWindow.after(0, lambda: MainWindow.stop_button.configure(state="disabled"))
 

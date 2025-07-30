@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from utils.helpers import close_window
+from utils.helpers import close_window, resource_path
 from utils.variables import VERSION, APP_NAME, ICON_PATH
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -7,15 +7,14 @@ if TYPE_CHECKING:
 
 
 class AboutWindow(ctk.CTkToplevel):
-    def __init__(self, MainWindow: "MainWindowClass", resource_path):
+    def __init__(self, MainWindow: "MainWindowClass"):
         super().__init__()
         self.MainWindow = MainWindow
 
         self.title("About")
         self.geometry("500x200")
-        self.after(300, lambda: self.iconbitmap(self.resource_path(ICON_PATH)))
+        self.after(300, lambda: self.iconbitmap(resource_path(ICON_PATH)))
         self.resizable(False, False)
-        self.resource_path = resource_path
 
         about_text = f"{APP_NAME}\nVersion {VERSION}" \
                      f"\nApplication that allows you to easily download videos from the internet. \n" \

@@ -23,15 +23,23 @@ def progress_hook(MainWindow: "MainWindowClass", d):
 
 
 def select_folder(MainWindow: "MainWindowClass"):
+    from ui.title_menu import TitleMenu
+    MainWindow.menu.destroy()
+    MainWindow.menu = None
     folder_path = filedialog.askdirectory()
     if folder_path and os.path.exists(folder_path):
         MainWindow.save_path_var.set(folder_path)
+    MainWindow.menu = TitleMenu(MainWindow)
 
 
 def select_cookies_file(MainWindow: "MainWindowClass"):
+    from ui.title_menu import TitleMenu
+    MainWindow.menu.destroy()
+    MainWindow.menu = None
     file_path = filedialog.askopenfilename()
     if file_path and os.path.exists(file_path):
         MainWindow.cookies_file_path_var.set(file_path)
+    MainWindow.menu = TitleMenu(MainWindow)
 
 
 def start_download_thread(MainWindow: "MainWindowClass"):
@@ -86,6 +94,12 @@ def clear_queue(MainWindow: "MainWindowClass"):
 def start_queue_processing(MainWindow: "MainWindowClass"):
     q_start_queue_processing(MainWindow)
 
+
+def resource_path(file):
+    data_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+    return os.path.join(data_dir, file)
+
 __all__ = ["make_notification", "progress_hook", "select_folder", "start_download_thread", "download_video",
            "stop_download", "save_settings", "load_settings", "show_soon", "show_about", "select_cookies_file",
-           "show_preferences", "check_updates", "close_window", "add_to_queue", "clear_queue", "start_queue_processing"]
+           "show_preferences", "check_updates", "close_window", "add_to_queue", "clear_queue", "start_queue_processing",
+           "resource_path"]

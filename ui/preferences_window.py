@@ -1,8 +1,8 @@
 import customtkinter as ctk
 from customtkinter.windows.widgets.theme.theme_manager import ThemeManager
 from CTkMessagebox import CTkMessagebox
-from utils.helpers import close_window, save_settings, load_settings
-from utils.variables import DEFAULT_SETTINGS, MAIN_THEMES, APP_NAME, ICON_PATH
+from utils.helpers import close_window, save_settings, load_settings, resource_path
+from utils.variables import DEFAULT_SETTINGS, MAIN_THEMES, APP_NAME, ICON_PATH, FILES
 from CTkListbox import CTkListbox
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -10,15 +10,13 @@ if TYPE_CHECKING:
 
 
 class PreferencesWindow(ctk.CTkToplevel):
-    def __init__(self, MainWindow: "MainWindowClass", resource_path):
+    def __init__(self, MainWindow: "MainWindowClass"):
         super().__init__()
         self.MainWindow = MainWindow
         self.title("Preferences")
         self.geometry("1000x400")
         self.resizable(False, False)
-        self.after(300, lambda: self.iconbitmap(self.resource_path(ICON_PATH)))
-
-        self.resource_path = resource_path
+        self.after(300, lambda: self.iconbitmap(resource_path(ICON_PATH)))
 
         self._initialize_components()
 
@@ -98,8 +96,8 @@ class PreferencesWindow(ctk.CTkToplevel):
         self.after(100, self.focus_set)
 
     def apply_preferences(self, default=False):
-        save_settings(self.MainWindow, self.MainWindow.files.get("previous_settings_file"))
-        if default is False:
+        save_settings(self.MainWindow, FILES.get("previous_settings_file"))
+        if not default:
             self.MainWindow.settings["notifications"] = self.notifications.get()
             if self.MainWindow.settings["main_theme"].title() != self.main_themes.get():
                 CTkMessagebox(title=f"{APP_NAME} (changing main theme)", icon="warning",
@@ -116,16 +114,16 @@ class PreferencesWindow(ctk.CTkToplevel):
             else:
                 self.MainWindow.rpc.rpc_close()
             if self.MainWindow.settings["auto_save"] == "Enabled":
-                save_settings(self.MainWindow, self.MainWindow.files.get("settings_file"))
+                save_settings(self.MainWindow, FILES.get("settings_file"))
         else:
             self.MainWindow.settings = DEFAULT_SETTINGS.copy()
             self.set_vars()
         ctk.set_appearance_mode(self.theme_var.get())
-        ctk.set_default_color_theme(self.resource_path(f'assets/themes/{self.main_themes.get().lower()}.json'))
+        ctk.set_default_color_theme(resource_path(f'assets/themes/{self.main_themes.get().lower()}.json'))
         self.after(50, self.focus_set)
 
     def apply_previous_preferences(self):
-        load_settings(self.MainWindow, self.MainWindow.files.get("previous_settings_file"), set_vars=True)
+        load_settings(self.MainWindow, FILES.get("previous_settings_file"), set_vars=True)
         if self.MainWindow.settings["discord_rpc"] == "Enabled":
             self.MainWindow.rpc.rpc_connect()
         else:

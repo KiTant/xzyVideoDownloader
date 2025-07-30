@@ -65,9 +65,9 @@ def q_start_queue_processing(MainWindow: "MainWindowClass"):
 
     MainWindow.stop_download_flag = False
     MainWindow.is_processing_queue = True
+    MainWindow.rpc.rpc_update(state=f"Downloading queue... ( {MainWindow.download_queue.qsize()} video(s) )")
     MainWindow.download_thread = threading.Thread(target=lambda: q_process_queue(MainWindow), daemon=True)
     MainWindow.download_thread.start()
-    MainWindow.rpc.rpc_update(state=f"Downloading queue... ({len(MainWindow.download_queue.queue)} video(s))")
 
     MainWindow.download_button.configure(state="disabled")
     MainWindow.add_to_queue_button.configure(state="disabled")
@@ -89,7 +89,7 @@ def q_process_queue(MainWindow: "MainWindowClass"):
                 MainWindow.queue_for_display.pop(0)
         MainWindow.after(0, lambda: q_update_queue_display(MainWindow))
 
-        status = download_video(MainWindow, url=url, queue_enabled=True)
+        download_video(MainWindow, url=url, queue_enabled=True)
 
         if MainWindow.stop_download_flag:
             temp_q = queue.Queue()
@@ -101,17 +101,6 @@ def q_process_queue(MainWindow: "MainWindowClass"):
                 MainWindow.queue_for_display.insert(0, url)
             MainWindow.after(0, lambda: q_update_queue_display(MainWindow))
             break
-
-        if status == 'retry_with_cookies':
-            temp_q = queue.Queue()
-            temp_q.put(url)
-            while not MainWindow.download_queue.empty():
-                temp_q.put(MainWindow.download_queue.get())
-            MainWindow.download_queue = temp_q
-            with MainWindow.display_lock:
-                MainWindow.queue_for_display.insert(0, url)
-            MainWindow.after(0, lambda: q_update_queue_display(MainWindow))
-            continue
 
         if not MainWindow.download_queue.empty() and not MainWindow.stop_download_flag:
             MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",

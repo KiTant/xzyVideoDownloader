@@ -21,7 +21,7 @@ def w_show_preferences(MainWindow: "MainWindowClass"):
         if window.title() in ["Preferences"]:
             window.focus_set()
             return
-    PreferencesWindow(MainWindow, MainWindow.resource_path)
+    PreferencesWindow(MainWindow)
 
 
 def w_show_about(MainWindow: "MainWindowClass"):
@@ -30,6 +30,6 @@ def w_show_about(MainWindow: "MainWindowClass"):
         if window.title() in ["About"]:
             window.focus_set()
             return
-    AboutWindow(MainWindow, MainWindow.resource_path)
+    AboutWindow(MainWindow)
 
 __all__ = ["w_close", "w_show_soon", "w_show_preferences", "w_show_about"]

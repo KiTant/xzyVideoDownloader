@@ -2,7 +2,7 @@ import threading
 import customtkinter as ctk
 import os
 from utils.helpers import *
-from utils.variables import DEFAULT_SETTINGS, DEFAULT_SPECIAL_SETTINGS, ICON_PATH, APP_NAME
+from utils.variables import DEFAULT_SETTINGS, DEFAULT_SPECIAL_SETTINGS, ICON_PATH, APP_NAME, FILES
 from ui.title_menu import TitleMenu
 from ui.queue_window import QueueWindow
 from utils.rpc_manager import RPCManager
@@ -11,19 +11,17 @@ import pyperclip
 
 
 class MainWindow(ctk.CTk):
-    def __init__(self, resource_path, files: dict):
+    def __init__(self):
         super().__init__()
 
         self.title(APP_NAME)
         self.geometry("720x640")
         self.grid_columnconfigure(0, weight=1)
         self.resizable(False, False)
-        self.after(300, lambda: self.iconbitmap(self.resource_path(ICON_PATH)))
+        self.after(300, lambda: self.iconbitmap(resource_path(ICON_PATH)))
 
         self.all_children = []
 
-        self.resource_path = resource_path
-        self.files = files
         self.settings = DEFAULT_SETTINGS.copy()
         self.special_settings = DEFAULT_SPECIAL_SETTINGS.copy()
 
@@ -45,8 +43,8 @@ class MainWindow(ctk.CTk):
         self.stop_download_flag = False
         self.is_processing_queue = False
 
-        load_settings(self, self.files.get("settings_file"), auto_load=True, set_vars=True)
-        load_settings(self, self.files.get("special_settings_file"),
+        load_settings(self, FILES.get("settings_file"), auto_load=True, set_vars=True)
+        load_settings(self, FILES.get("special_settings_file"),
                       default_values=DEFAULT_SPECIAL_SETTINGS, attr_name="special_settings")
 
         self._initialize_components()
@@ -106,7 +104,7 @@ class MainWindow(ctk.CTk):
         if self.special_settings["use_queue"]:
             self.use_queue_var.set(self.special_settings["use_queue"])
 
-        self.queue_window = QueueWindow(self.resource_path)
+        self.queue_window = QueueWindow()
         self.queue_window.withdraw()
 
         self.cookies_file_label = ctk.CTkLabel(self, text="Cookies file:")
@@ -150,7 +148,7 @@ class MainWindow(ctk.CTk):
         self.progress_bar.set(0)
         self.progress_bar.grid(row=16, column=0, padx=20, pady=(5, 20), sticky="ew")
 
-        self.menu = TitleMenu(MainWindow=self)
+        self.menu = TitleMenu(self)
 
         if self.settings["discord_rpc"] == "Enabled":
             self.rpc.rpc_connect()
@@ -158,7 +156,7 @@ class MainWindow(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self.window_close)
 
         if self.settings["queue_auto_load"] == "Enabled":
-            load_settings(self, self.files.get("queue_file"), default_values={}, attr_name="download_queue")
+            load_settings(self, FILES.get("queue_file"), default_values={}, attr_name="download_queue")
 
     def update_status(self, message, **kwargs):
         self.status_label.configure(text=message, **kwargs)
@@ -176,13 +174,13 @@ class MainWindow(ctk.CTk):
         self.special_settings["use_queue"] = self.use_queue_var.get()
         self.special_settings["use_cookies"] = self.use_cookies_var.get()
         self.special_settings["cookies_path"] = self.cookies_file_path_var.get()
-        save_settings(self, self.files.get("special_settings_file"), self.special_settings)
+        save_settings(self, FILES.get("special_settings_file"), self.special_settings)
         if self.settings["queue_auto_save"] == "Enabled":
-            save_settings(self, self.files.get("queue_file"), queue_obj=self.download_queue)
+            save_settings(self, FILES.get("queue_file"), queue_obj=self.download_queue)
 
     def start_download(self):
         self.save_spec_attrs()
-        if self.use_queue_var.get() is True:
+        if self.use_queue_var.get():
             start_queue_processing(self)
         else:
             start_download_thread(self)
