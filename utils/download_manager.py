@@ -96,6 +96,14 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             else:
                 resolution = quality[:-1]
                 ydl_opts['format'] = f'bestvideo[height<={resolution}][acodec=none]/bestvideo[height<={resolution}]'
+        elif download_type == "Custom Format":
+            custom_format = MainWindow.settings['custom_format']
+            if custom_format.strip():
+                ydl_opts['format'] = MainWindow.settings['custom_format']
+            else:
+                make_notification(MainWindow, {"status": "Base", "text": "Error: Your custom format is empty.",
+                                               "color": "red", "icon": "cancel"})
+                return
         else:
             if quality == "Best (both)":
                 ydl_opts['format'] = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best'

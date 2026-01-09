@@ -55,7 +55,7 @@ def check_last_version(MainWindow: "MainWindowClass"):
                     MainWindow.updating = False
                     return
                 for asset in latest_release['assets']:
-                    if asset['name'].strip().startswith(f"{APP_NAME}") and asset['name'].strip().endswith(".exe"):
+                    if asset['name'].strip().startswith(APP_NAME) and asset['name'].strip().endswith(".exe"):
                         found_file = True
                         download_last_release(MainWindow, latest_release['tag_name'], asset['name'])
                 if not found_file:

@@ -1,7 +1,8 @@
 import customtkinter as ctk
+import webbrowser
 from customtkinter.windows.widgets.theme.theme_manager import ThemeManager
 from CTkMessagebox import CTkMessagebox
-from utils.helpers import close_window, save_settings, load_settings, resource_path
+from utils.helpers import close_window, save_settings, load_settings, resource_path, entry_keybinds_normalize
 from utils.variables import DEFAULT_SETTINGS, MAIN_THEMES, APP_NAME, ICON_PATH, FILES
 from CTkListbox import CTkListbox
 from typing import TYPE_CHECKING
@@ -38,40 +39,30 @@ class PreferencesWindow(ctk.CTkToplevel):
 
         ctk.CTkLabel(self, text="Notifications:").place(relx=0.15, rely=0.01)
         self.notifications = ctk.StringVar(value=self.MainWindow.settings["notifications"])
-        ctk.CTkRadioButton(self, text="Only Text", variable=self.notifications, value="OnlyText").place(
-            relx=0.15, rely=0.1)
-        ctk.CTkRadioButton(self, text="Text + Message Box", variable=self.notifications, value="TextAndMessageBox").place(
-            relx=0.15, rely=0.2)
+        ctk.CTkRadioButton(self, text="Only Text", variable=self.notifications, value="OnlyText").place(relx=0.15, rely=0.1)
+        ctk.CTkRadioButton(self, text="Text + Message Box", variable=self.notifications, value="TextAndMessageBox").place(relx=0.15, rely=0.2)
         ctk.CTkRadioButton(self, text="Text + Windows Notification", variable=self.notifications,
                            value="TextAndWindowsNotification").place(relx=0.25, rely=0.1)
 
         ctk.CTkLabel(self, text="Auto Load (queue):").place(relx=0.025, rely=0.6)
         self.queue_auto_load = ctk.StringVar(value=self.MainWindow.settings["queue_auto_load"])
-        ctk.CTkRadioButton(self, text="Enabled", variable=self.queue_auto_load, value="Enabled").place(relx=0.025,
-                                                                                                       rely=0.7)
-        ctk.CTkRadioButton(self, text="Disabled", variable=self.queue_auto_load, value="Disabled").place(relx=0.025,
-                                                                                                         rely=0.8)
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.queue_auto_load, value="Enabled").place(relx=0.025, rely=0.7)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.queue_auto_load, value="Disabled").place(relx=0.025, rely=0.8)
 
         ctk.CTkLabel(self, text="Auto Save (queue):").place(relx=0.17, rely=0.6)
         self.queue_auto_save = ctk.StringVar(value=self.MainWindow.settings["queue_auto_save"])
-        ctk.CTkRadioButton(self, text="Enabled", variable=self.queue_auto_save, value="Enabled").place(relx=0.17,
-                                                                                                       rely=0.7)
-        ctk.CTkRadioButton(self, text="Disabled", variable=self.queue_auto_save, value="Disabled").place(relx=0.17,
-                                                                                                         rely=0.8)
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.queue_auto_save, value="Enabled").place(relx=0.17, rely=0.7)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.queue_auto_save, value="Disabled").place(relx=0.17, rely=0.8)
 
         ctk.CTkLabel(self, text="Discord RPC:").place(relx=0.3, rely=0.3)
         self.discord_rpc = ctk.StringVar(value=self.MainWindow.settings["discord_rpc"])
-        ctk.CTkRadioButton(self, text="Enabled", variable=self.discord_rpc, value="Enabled").place(relx=0.3,
-                                                                                                   rely=0.4)
-        ctk.CTkRadioButton(self, text="Disabled", variable=self.discord_rpc, value="Disabled").place(relx=0.3,
-                                                                                                     rely=0.5)
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.discord_rpc, value="Enabled").place(relx=0.3, rely=0.4)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.discord_rpc, value="Disabled").place(relx=0.3, rely=0.5)
 
         ctk.CTkLabel(self, text="Link auto remove\n(after adding to the queue):").place(relx=0.3, rely=0.59)
         self.link_auto_remove = ctk.StringVar(value=self.MainWindow.settings["link_auto_remove"])
-        ctk.CTkRadioButton(self, text="Enabled", variable=self.link_auto_remove, value="Enabled").place(relx=0.3,
-                                                                                                        rely=0.7)
-        ctk.CTkRadioButton(self, text="Disabled", variable=self.link_auto_remove, value="Disabled").place(relx=0.3,
-                                                                                                          rely=0.8)
+        ctk.CTkRadioButton(self, text="Enabled", variable=self.link_auto_remove, value="Enabled").place(relx=0.3, rely=0.7)
+        ctk.CTkRadioButton(self, text="Disabled", variable=self.link_auto_remove, value="Disabled").place(relx=0.3, rely=0.8)
 
         ctk.CTkLabel(self, text="Main Theme:").place(relx=0.5, rely=0.01)
         self.main_themes = CTkListbox(self, width=125, font=ctk.CTkFont(family="Arial", size=12),
@@ -81,6 +72,16 @@ class PreferencesWindow(ctk.CTkToplevel):
         for theme in MAIN_THEMES.values():
             self.main_themes.insert("END", theme)
         self.main_themes.select(list(MAIN_THEMES.keys())[list(MAIN_THEMES.values()).index(self.MainWindow.settings["main_theme"].title())])
+
+        ctk.CTkLabel(self, text="Custom Format:").place(relx=0.5, rely=0.635)
+        self.custom_format = ctk.StringVar(value=self.MainWindow.settings["custom_format"])
+        cust_form_entry = ctk.CTkEntry(self, textvariable=self.custom_format, width=450)
+        cust_form_entry.place(relx=0.5, rely=0.7)
+        entry_keybinds_normalize(cust_form_entry)
+
+        ctk.CTkButton(self, text="Read more about custom formats", font=ctk.CTkFont(family="Arial", size=15), corner_radius=15,
+                      command=lambda: webbrowser.open("https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#format-selection"),
+                      width=160, height=20).place(relx=0.7, rely=0.8)
 
         self.MainWindow.all_children.append(self)
 
@@ -109,6 +110,7 @@ class PreferencesWindow(ctk.CTkToplevel):
             self.MainWindow.settings["queue_auto_save"] = self.queue_auto_save.get()
             self.MainWindow.settings["link_auto_remove"] = self.link_auto_remove.get()
             self.MainWindow.settings["discord_rpc"] = self.discord_rpc.get()
+            self.MainWindow.settings["custom_format"] = self.custom_format.get()
             if self.discord_rpc.get() == "Enabled":
                 self.MainWindow.rpc.rpc_connect()
             else:
@@ -136,10 +138,7 @@ class PreferencesWindow(ctk.CTkToplevel):
         self.queue_auto_save.set(self.MainWindow.settings['queue_auto_save'])
         self.link_auto_remove.set(self.MainWindow.settings['link_auto_remove'])
         self.discord_rpc.set(self.MainWindow.settings["discord_rpc"])
+        self.custom_format.set(self.MainWindow.settings["custom_format"])
         self.notifications.set(self.MainWindow.settings['notifications'])
         self.theme_var.set(self.MainWindow.settings['theme'])
         self.main_themes.select(list(MAIN_THEMES.keys())[list(MAIN_THEMES.values()).index(self.MainWindow.settings["main_theme"].title())])
-
-    def change_language(self):
-        pass
-        # Soon

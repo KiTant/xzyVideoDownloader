@@ -3,7 +3,7 @@ import os
 APP_NAME = "xzyVideoDownloader"
 REPO_NAME = APP_NAME
 ICON_PATH = 'assets/xzy-video-downloader-icon.ico'
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 RPC_ID = "1399413906010673282"
 
 APPDATA = os.getenv('APPDATA')
@@ -38,6 +38,7 @@ DEFAULT_SETTINGS = {
     "queue_auto_save": "Enabled",
     "link_auto_remove": "Enabled",
     "discord_rpc": "Disabled",
+    "custom_format": ""
 }
 
 DEFAULT_SPECIAL_SETTINGS = {  # Special settings will be saved anyway after any change(s) (and auto loaded always)

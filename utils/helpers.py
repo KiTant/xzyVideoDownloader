@@ -2,6 +2,8 @@ import os
 import queue
 from customtkinter import filedialog
 import customtkinter as ctk
+import pyperclip
+from CTkMenuBarPlus import _register_accelerator
 from utils.ui_manager import *
 from utils.settings_manager import *
 from utils.download_manager import *
@@ -23,23 +25,19 @@ def progress_hook(MainWindow: "MainWindowClass", d):
 
 
 def select_folder(MainWindow: "MainWindowClass"):
-    from ui.title_menu import TitleMenu
-    MainWindow.menu.destroy()
-    MainWindow.menu = None
+    MainWindow.menu.hide()
     folder_path = filedialog.askdirectory()
     if folder_path and os.path.exists(folder_path):
         MainWindow.save_path_var.set(folder_path)
-    MainWindow.menu = TitleMenu(MainWindow)
+    MainWindow.menu.show()
 
 
 def select_cookies_file(MainWindow: "MainWindowClass"):
-    from ui.title_menu import TitleMenu
-    MainWindow.menu.destroy()
-    MainWindow.menu = None
+    MainWindow.menu.hide()
     file_path = filedialog.askopenfilename()
     if file_path and os.path.exists(file_path):
         MainWindow.cookies_file_path_var.set(file_path)
-    MainWindow.menu = TitleMenu(MainWindow)
+    MainWindow.menu.show()
 
 
 def start_download_thread(MainWindow: "MainWindowClass"):
@@ -99,7 +97,40 @@ def resource_path(file):
     data_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
     return os.path.join(data_dir, file)
 
+
+def entry_paste(entry: ctk.CTkEntry):
+    try:
+        try:
+            entry.delete(ctk.SEL_FIRST, ctk.SEL_LAST)
+        finally:
+            entry.insert(ctk.INSERT, pyperclip.paste())
+    except:
+        return
+
+
+def entry_copy(entry: ctk.CTkEntry):
+    try:
+        pyperclip.copy(entry.get()[entry.index(ctk.SEL_FIRST):entry.index(ctk.SEL_LAST)])
+    except:
+        return
+
+
+def entry_cut(entry: ctk.CTkEntry):
+    try:
+        entry_copy(entry)
+        entry.delete(ctk.SEL_FIRST, ctk.SEL_LAST)
+    except:
+        return
+
+
+def entry_keybinds_normalize(entry: ctk.CTkEntry):
+    _register_accelerator(entry, "Ctrl+C", lambda: entry_copy(entry), bind_scope='widget')
+    _register_accelerator(entry, "Ctrl+V", lambda: entry_paste(entry), bind_scope='widget')
+    _register_accelerator(entry, "Ctrl+X", lambda: entry_cut(entry), bind_scope='widget')
+    _register_accelerator(entry, "Esc", entry.master.focus)
+    _register_accelerator(entry, "Return", entry.master.focus)
+
 __all__ = ["make_notification", "progress_hook", "select_folder", "start_download_thread", "download_video",
            "stop_download", "save_settings", "load_settings", "show_soon", "show_about", "select_cookies_file",
            "show_preferences", "check_updates", "close_window", "add_to_queue", "clear_queue", "start_queue_processing",
-           "resource_path"]
+           "resource_path", "entry_copy", "entry_cut", "entry_keybinds_normalize"]

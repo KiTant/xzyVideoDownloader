@@ -7,7 +7,6 @@ from ui.title_menu import TitleMenu
 from ui.queue_window import QueueWindow
 from utils.rpc_manager import RPCManager
 import queue
-import pyperclip
 
 
 class MainWindow(ctk.CTk):
@@ -55,9 +54,7 @@ class MainWindow(ctk.CTk):
         self.url_entry = ctk.CTkEntry(self, textvariable=self.url_var, width=400)
         self.url_entry.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
 
-        for method in ["<<Paste>>", "<<Copy>>"]:
-            self.url_entry.unbind_class("Text", method)
-        self.url_entry.bind("<Key>", lambda event: self.on_key_press(event))
+        entry_keybinds_normalize(self.url_entry)
 
         if self.special_settings["saved_link_input"]:
             self.url_var.set(self.special_settings["saved_link_input"])
@@ -73,6 +70,9 @@ class MainWindow(ctk.CTk):
         self.radio_audio_only = ctk.CTkRadioButton(self, text="Audio Only (MP3)",
                                                    variable=self.download_type_var, value="Audio Only (MP3)")
         self.radio_audio_only.grid(row=5, column=0, padx=20, pady=3, sticky="w")
+        self.radio_custom_format = ctk.CTkRadioButton(self, text="Custom Format",
+                                                      variable=self.download_type_var, value="Custom Format")
+        self.radio_custom_format.grid(row=4, column=0, padx=125, pady=3, sticky="w")
 
         if self.special_settings["download_type"]:
             self.download_type_var.set(self.special_settings["download_type"])
@@ -162,9 +162,11 @@ class MainWindow(ctk.CTk):
         self.status_label.configure(text=message, **kwargs)
 
     def window_close(self):
-        self.rpc.rpc_close()
-        self.save_spec_attrs()
-        self.destroy()
+        try:
+            self.rpc.rpc_close()
+            self.save_spec_attrs()
+        finally:
+            self.destroy()
 
     def save_spec_attrs(self):
         self.special_settings["saved_link_input"] = self.url_entry.get()
@@ -184,7 +186,3 @@ class MainWindow(ctk.CTk):
             start_queue_processing(self)
         else:
             start_download_thread(self)
-
-    def on_key_press(self, event):
-        if event.char == '\x03': pyperclip.copy(self.url_var.get())  # Ctrl + C
-        elif event.char == '\x16': pyperclip.paste()  # Ctrl + V
