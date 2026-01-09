@@ -12,7 +12,7 @@ You need to use "Get cookies.txt LOCALLY" extension or something similar
 - customtkinter
 - yt_dlp
 - CTkMessagebox
-- CTkMenuBar
+- CTkMenuBarPlus
 - CTkListbox
 - queue
 - os
