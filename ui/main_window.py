@@ -3,6 +3,9 @@ import customtkinter as ctk
 import os
 from utils.helpers import *
 from utils.variables import DEFAULT_SETTINGS, DEFAULT_SPECIAL_SETTINGS, ICON_PATH, APP_NAME, FILES
+from utils.settings_manager import *
+from utils.download_manager import start_download_thread, stop_download
+from utils.queue_manager import *
 from ui.title_menu import TitleMenu
 from ui.queue_window import QueueWindow
 from utils.rpc_manager import RPCManager
@@ -42,8 +45,8 @@ class MainWindow(ctk.CTk):
         self.stop_download_flag = False
         self.is_processing_queue = False
 
-        load_settings(self, FILES.get("settings_file"), auto_load=True, set_vars=True)
-        load_settings(self, FILES.get("special_settings_file"),
+        settings_load(self, FILES.get("settings_file"), auto_load=True, set_vars=True)
+        settings_load(self, FILES.get("special_settings_file"),
                       default_values=DEFAULT_SPECIAL_SETTINGS, attr_name="special_settings")
 
         self._initialize_components()
@@ -156,7 +159,7 @@ class MainWindow(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", self.window_close)
 
         if self.settings["queue_auto_load"] == "Enabled":
-            load_settings(self, FILES.get("queue_file"), default_values={}, attr_name="download_queue")
+            settings_load(self, FILES.get("queue_file"), default_values={}, attr_name="download_queue")
 
     def update_status(self, message, **kwargs):
         self.status_label.configure(text=message, **kwargs)
@@ -176,9 +179,9 @@ class MainWindow(ctk.CTk):
         self.special_settings["use_queue"] = self.use_queue_var.get()
         self.special_settings["use_cookies"] = self.use_cookies_var.get()
         self.special_settings["cookies_path"] = self.cookies_file_path_var.get()
-        save_settings(self, FILES.get("special_settings_file"), self.special_settings)
+        settings_save(self, FILES.get("special_settings_file"), self.special_settings)
         if self.settings["queue_auto_save"] == "Enabled":
-            save_settings(self, FILES.get("queue_file"), queue_obj=self.download_queue)
+            settings_save(self, FILES.get("queue_file"), queue_obj=self.download_queue)
 
     def start_download(self):
         self.save_spec_attrs()

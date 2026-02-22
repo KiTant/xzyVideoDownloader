@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from ui.main_window import MainWindow as MainWindowClass
 
 
-def w_show(MainWindow: "MainWindowClass", names: list, func):
+def window_show(MainWindow: "MainWindowClass", names: list, func):
     for window in MainWindow.all_children:
         if window.title() in names:
             window.focus_set()
@@ -14,22 +14,22 @@ def w_show(MainWindow: "MainWindowClass", names: list, func):
     func()
 
 
-def w_close(MainWindow: "MainWindowClass", Window: Union["MainWindowClass", ctk.CTkToplevel]):
+def window_close(MainWindow: "MainWindowClass", Window: Union["MainWindowClass", ctk.CTkToplevel]):
     MainWindow.all_children.remove(Window)
     Window.destroy()
 
 
-def w_show_soon():
+def show_soon():
     CTkMessagebox(title=APP_NAME, message="This option will be soon.", icon="info")
 
 
-def w_show_preferences(MainWindow: "MainWindowClass"):
+def show_preferences(MainWindow: "MainWindowClass"):
     from ui.preferences_window import PreferencesWindow
-    w_show(MainWindow, ["Preferences"], lambda: PreferencesWindow(MainWindow))
+    window_show(MainWindow, ["Preferences"], lambda: PreferencesWindow(MainWindow))
 
 
-def w_show_about(MainWindow: "MainWindowClass"):
+def show_about(MainWindow: "MainWindowClass"):
     from ui.about_window import AboutWindow
-    w_show(MainWindow, ["About"], lambda: AboutWindow(MainWindow))
+    window_show(MainWindow, ["About"], lambda: AboutWindow(MainWindow))
 
-__all__ = ["w_close", "w_show_soon", "w_show_preferences", "w_show_about"]
+__all__ = ["window_close", "show_soon", "show_preferences", "show_about"]

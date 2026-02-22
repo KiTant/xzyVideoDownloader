@@ -2,7 +2,9 @@ import customtkinter as ctk
 import webbrowser
 from customtkinter.windows.widgets.theme.theme_manager import ThemeManager
 from CTkMessagebox import CTkMessagebox
-from utils.helpers import close_window, save_settings, load_settings, resource_path, entry_keybinds_normalize
+from utils.helpers import resource_path, entry_keybinds_normalize
+from utils.ui_manager import window_close
+from utils.settings_manager import *
 from utils.variables import DEFAULT_SETTINGS, MAIN_THEMES, APP_NAME, ICON_PATH, FILES
 from CTkListbox import CTkListbox
 from typing import TYPE_CHECKING
@@ -92,12 +94,12 @@ class PreferencesWindow(ctk.CTkToplevel):
         ctk.CTkButton(self, text="Apply previous settings", font=ctk.CTkFont(family="Arial", size=15), corner_radius=15,
                       command=self.apply_previous_preferences, width=160, height=35).place(relx=0.39, rely=0.9)
 
-        self.protocol("WM_DELETE_WINDOW", lambda: close_window(self.MainWindow, self))
+        self.protocol("WM_DELETE_WINDOW", lambda: window_close(self.MainWindow, self))
 
         self.after(100, self.focus_set)
 
     def apply_preferences(self, default=False):
-        save_settings(self.MainWindow, FILES.get("previous_settings_file"))
+        settings_save(self.MainWindow, FILES.get("previous_settings_file"))
         if not default:
             self.MainWindow.settings["notifications"] = self.notifications.get()
             if self.MainWindow.settings["main_theme"].title() != self.main_themes.get():
@@ -116,7 +118,7 @@ class PreferencesWindow(ctk.CTkToplevel):
             else:
                 self.MainWindow.rpc.rpc_close()
             if self.MainWindow.settings["auto_save"] == "Enabled":
-                save_settings(self.MainWindow, FILES.get("settings_file"))
+                settings_save(self.MainWindow, FILES.get("settings_file"))
         else:
             self.MainWindow.settings = DEFAULT_SETTINGS.copy()
             self.set_vars()
@@ -125,7 +127,7 @@ class PreferencesWindow(ctk.CTkToplevel):
         self.after(50, self.focus_set)
 
     def apply_previous_preferences(self):
-        load_settings(self.MainWindow, FILES.get("previous_settings_file"), set_vars=True)
+        settings_load(self.MainWindow, FILES.get("previous_settings_file"), set_vars=True)
         if self.MainWindow.settings["discord_rpc"] == "Enabled":
             self.MainWindow.rpc.rpc_connect()
         else:

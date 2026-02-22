@@ -6,8 +6,8 @@ if TYPE_CHECKING:
     from ui.main_window import MainWindow as MainWindowClass
 
 
-def d_progress_hook(MainWindow: "MainWindowClass", d):
-    from utils.helpers import make_notification
+def progress_hook(MainWindow: "MainWindowClass", d):
+    from utils.notify_manager import notification
 
     if MainWindow.stop_download_flag:
         raise yt_dlp.utils.DownloadError("Download stopped")
@@ -18,7 +18,7 @@ def d_progress_hook(MainWindow: "MainWindowClass", d):
             downloaded_bytes = d.get('downloaded_bytes')
             progress = downloaded_bytes / total_bytes
             MainWindow.after(0, lambda: MainWindow.progress_bar.set(progress))
-            MainWindow.after(0, lambda: make_notification(MainWindow,
+            MainWindow.after(0, lambda: notification(MainWindow,
                                                           {"status": "DownloadingUpdate",
                                                            "text": f"Downloading: {d['_percent_str']} of {d['_total_bytes_str']}"
                                                            f" at {d['_speed_str']}",
@@ -27,32 +27,32 @@ def d_progress_hook(MainWindow: "MainWindowClass", d):
 
     elif d['status'] == 'finished':
         MainWindow.after(0, lambda: MainWindow.progress_bar.set(1))
-        MainWindow.after(0, lambda: make_notification(MainWindow,
+        MainWindow.after(0, lambda: notification(MainWindow,
                                                       {"status": "DownloadingUpdate", "text": "Processing...",
                                                        "color": "blue"}))
 
 
-def d_start_download_thread(MainWindow: "MainWindowClass"):
-    from utils.helpers import make_notification
+def start_download_thread(MainWindow: "MainWindowClass"):
+    from utils.notify_manager import notification
 
     url = MainWindow.url_var.get()
     save_path = MainWindow.save_path_var.get()
     if not url:
-        make_notification(MainWindow, {"status": "Base", "text": "Error: Please enter a video URL.",
+        notification(MainWindow, {"status": "Base", "text": "Error: Please enter a video URL.",
                                        "color": "red", "icon": "cancel"})
         return
     if not save_path or not os.path.exists(save_path):
-        make_notification(MainWindow, {"status": "Base", "text": "Error: Please select a save folder.",
+        notification(MainWindow, {"status": "Base", "text": "Error: Please select a save folder.",
                                        "color": "red", "icon": "cancel"})
         return
 
     MainWindow.stop_download_flag = False
-    MainWindow.download_thread = threading.Thread(target=lambda: d_download_video(MainWindow), daemon=True)
+    MainWindow.download_thread = threading.Thread(target=lambda: download_video(MainWindow), daemon=True)
     MainWindow.download_thread.start()
 
 
-def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabled: bool = False):
-    from utils.helpers import make_notification
+def download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabled: bool = False):
+    from utils.notify_manager import notification
 
     url = url if url else MainWindow.url_var.get()
     save_path = MainWindow.save_path_var.get()
@@ -66,14 +66,14 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
 
     MainWindow.after(0, lambda: MainWindow.download_button.configure(state="disabled"))
     MainWindow.after(0, lambda: MainWindow.stop_button.configure(state="normal"))
-    MainWindow.after(0, lambda: make_notification(MainWindow, {
+    MainWindow.after(0, lambda: notification(MainWindow, {
                          "link": url, "status": "Downloading", "text": "Starting download...", "color": "blue"}))
     MainWindow.after(0, lambda: MainWindow.progress_bar.set(0))
 
     try:
         ydl_opts = {
             'outtmpl': f'{save_path}/%(title)s.%(ext)s',
-            'progress_hooks': [lambda d: d_progress_hook(MainWindow, d)],
+            'progress_hooks': [lambda d: progress_hook(MainWindow, d)],
             'noplaylist': True,
             'merge_output_format': 'mp4',
             'abort-on-unavailable-fragments': True,
@@ -101,7 +101,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             if custom_format.strip():
                 ydl_opts['format'] = MainWindow.settings['custom_format']
             else:
-                make_notification(MainWindow, {"status": "Base", "text": "Error: Your custom format is empty.",
+                notification(MainWindow, {"status": "Base", "text": "Error: Your custom format is empty.",
                                                "color": "red", "icon": "cancel"})
                 return
         else:
@@ -122,7 +122,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             ydl.download([url])
 
         if not MainWindow.stop_download_flag:
-            MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",
+            MainWindow.after(0, lambda: notification(MainWindow, {"status": "DownloadingUpdate",
                                            "text": "Video download completed successfully!",
                                            "color": "green", "value": 100, "icon": "check"}))
             MainWindow.rpc.rpc_update(state=f"Just chillin (🟢)")
@@ -131,7 +131,7 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
         if not MainWindow.stop_download_flag:
             error_message = str(e)
             if "Download stopped" in error_message:
-                MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",
+                MainWindow.after(0, lambda: notification(MainWindow, {"status": "DownloadingUpdate",
                                                "text": "Download stopped (unavailable-fragments)", "color": "red"}))
             else:
                 if "invalid start byte" in error_message.lower():
@@ -141,21 +141,21 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
                     error_message = "It looks like you entered an incorrect link."
                 elif "private" in error_message.lower():
                     error_message = "This video is private, maybe with using cookies it can be downloaded"
-                MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "Base",
+                MainWindow.after(0, lambda: notification(MainWindow, {"status": "Base",
                                                "text": f"Error: {error_message}",
                                                "color": "red", "icon": "cancel"}))
             MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
 
     except Exception as err:
         if not MainWindow.stop_download_flag:
-            MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "Base",
+            MainWindow.after(0, lambda: notification(MainWindow, {"status": "Base",
                                                                        "text": f"An unexpected error occurred: {err}",
                                                                        "color": "red", "icon": "cancel"}))
             MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
 
     finally:
         if MainWindow.stop_download_flag:
-            MainWindow.after(0, lambda: make_notification(MainWindow, {"status": "DownloadingUpdate",
+            MainWindow.after(0, lambda: notification(MainWindow, {"status": "DownloadingUpdate",
                                                                "text": "Download stopped (unavailable-fragments)",
                                                                "color": "red"}))
             MainWindow.rpc.rpc_update(state=f"Just chillin (🔴)")
@@ -164,14 +164,14 @@ def d_download_video(MainWindow: "MainWindowClass", url: str = None, queue_enabl
             MainWindow.after(0, lambda: MainWindow.stop_button.configure(state="disabled"))
 
 
-def d_stop_download(MainWindow: "MainWindowClass"):
-    from utils.helpers import make_notification
+def stop_download(MainWindow: "MainWindowClass"):
+    from utils.notify_manager import notification
 
     if MainWindow.download_thread and MainWindow.download_thread.is_alive():
         MainWindow.stop_download_flag = True
-        make_notification(MainWindow, {"status": "DownloadingUpdate",
+        notification(MainWindow, {"status": "DownloadingUpdate",
                                        "text": "Stopping download...",
                                        "color": "orange"})
         MainWindow.stop_button.configure(state="disabled")
 
-__all__ = ["d_progress_hook", "d_start_download_thread", "d_download_video", "d_stop_download"]
+__all__ = ["progress_hook", "start_download_thread", "download_video", "stop_download"]
